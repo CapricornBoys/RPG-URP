@@ -9,18 +9,23 @@ public class PlayerController : MonoBehaviour
     private NavMeshAgent agent;
 
     private Animator ani;
+    private CharacterStats characterStats;
 
     private GameObject attackTarget; //攻击目标
     private float lastAttackTime; // 攻击间隔
+
+    private bool isDead;
 
     private void Awake()
     {
         agent = gameObject.GetComponent<NavMeshAgent>();
         ani = GetComponent<Animator>();
+        characterStats = GetComponent<CharacterStats>();
     }
 
     private void Update()
     {
+        isDead = characterStats.CurrentHealth == 0;
         SwichAnimation();
 
         lastAttackTime -= Time.deltaTime;
@@ -29,6 +34,7 @@ public class PlayerController : MonoBehaviour
     void SwichAnimation()
     {
         ani.SetFloat("Speed", agent.velocity.sqrMagnitude);
+        ani.SetBool("Death", isDead);
     }
 
     private void Start()
@@ -51,6 +57,7 @@ public class PlayerController : MonoBehaviour
         if (target != null)
         {
             attackTarget = target;
+            characterStats.isCritical = UnityEngine.Random.value < characterStats.attackData.criticalChance;
             StartCoroutine(MoveToAttackTarget());
         }
     }
@@ -61,8 +68,8 @@ public class PlayerController : MonoBehaviour
 
         transform.LookAt(attackTarget.transform);
 
-        //TODO: 攻击距离
-        while (Vector3.Distance(transform.position, attackTarget.transform.position) > 1)
+        
+        while (Vector3.Distance(transform.position, attackTarget.transform.position) > characterStats.attackData.attackRange)
         {
             agent.destination = attackTarget.transform.position;
             yield return null;
@@ -74,11 +81,22 @@ public class PlayerController : MonoBehaviour
 
         if (lastAttackTime < 0)
         {
+            ani.SetBool("Critical", characterStats.isCritical);
             ani.SetTrigger("Attack");
 
             // cd
-            lastAttackTime = 0.5f;
+            lastAttackTime = characterStats.attackData.coolDown;
         }
 
+    }
+
+
+    // Animation Event
+
+    void Hit()
+    {
+        var targetStats = attackTarget.GetComponent<CharacterStats>();
+
+        targetStats.TakeDamage(characterStats, targetStats);
     }
 }
