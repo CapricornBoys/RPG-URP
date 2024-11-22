@@ -26,6 +26,10 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         isDead = characterStats.CurrentHealth == 0;
+
+        if (isDead)
+            GameManager.Instance.NotifyObserver();
+
         SwichAnimation();
 
         lastAttackTime -= Time.deltaTime;
@@ -41,6 +45,8 @@ public class PlayerController : MonoBehaviour
     {
         MouseManager.Instance.OnMouseClicked += Move2Target;
         MouseManager.Instance.OnEnemyClicked += EventAttack;
+
+        GameManager.Instance.RigisterPlayer(characterStats);
     }
 
     

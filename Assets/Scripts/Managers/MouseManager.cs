@@ -3,26 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MouseManager : MonoBehaviour
+public class MouseManager : Singleton<MouseManager>
 {
-    public static MouseManager Instance;
-
     RaycastHit hitInfo;
 
     public event Action<Vector3> OnMouseClicked;
     public event Action<GameObject> OnEnemyClicked;
 
     public Texture2D target, attack;
-
-
-    private void Awake()
-    {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-        }
-        Instance = this;
-    }
+    
 
     private void Update()
     {

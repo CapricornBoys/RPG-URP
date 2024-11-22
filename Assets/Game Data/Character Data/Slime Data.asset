@@ -15,4 +15,4 @@ MonoBehaviour:
   maxHealth: 20
   currentHealth: 4
   baseDefence: 5
-  currentDefence: 5
+  currentDefence: 3

@@ -6,7 +6,7 @@ using UnityEngine.AI;
 public enum EnemyStates { GUARD, PATROL, CHASE, DEAD }
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class EnemyController : MonoBehaviour
+public class EnemyController : MonoBehaviour,IEndGameObserver
 {
     private EnemyStates enemyStates;
 
@@ -40,6 +40,7 @@ public class EnemyController : MonoBehaviour
     bool isChase;
     bool isFollow;
     bool isDead;
+    bool playerDead;
 
 
     private void Awake()
@@ -68,13 +69,26 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    void OnEnable()
+    {
+        GameManager.Instance.AddObserver(this);
+    }
+
+    void OnDisable()
+    {
+        GameManager.Instance.RemoveObserver(this);
+    }
+
     private void Update()
     {
         isDead = characterStats.CurrentHealth == 0;
 
-        SwitchStates();
-        SwitchAnimation();
-        lastAttackTime -= Time.deltaTime;
+        if (!playerDead)
+        {
+            SwitchStates();
+            SwitchAnimation();
+            lastAttackTime -= Time.deltaTime;
+        }        
     }
 
     void SwitchAnimation()
@@ -280,5 +294,14 @@ public class EnemyController : MonoBehaviour
             var targetStats = attackTarget.GetComponent<CharacterStats>();
             targetStats.TakeDamage(characterStats, targetStats);
         }
+    }
+
+    public void EndNotify()
+    {
+        anim.SetBool("Win", true);
+        playerDead = true;
+        isChase = false;
+        isWalk = false;
+        attackTarget = null;
     }
 }
