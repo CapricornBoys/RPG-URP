@@ -5,12 +5,20 @@ using UnityEngine;
 
 public class CharacterStats : MonoBehaviour
 {
+    public CharacterData_SO templateData;
+
     public CharacterData_SO characterData;
     public AttackData_SO attackData;
 
     [HideInInspector]
     public bool isCritical; // 是否暴击
 
+
+    private void Awake()
+    {
+        if (templateData != null)
+            characterData = Instantiate(templateData);
+    }
 
     #region Read SO Data
     public int MaxHealth {
@@ -44,7 +52,7 @@ public class CharacterStats : MonoBehaviour
         int damage = Mathf.Max(attacker.CurrentDamage() - defener.CurrentDefence, 0);
         CurrentHealth = Mathf.Max(CurrentHealth - damage, 0);
 
-        if (isCritical)
+        if (attacker.isCritical)
         {
             defener.GetComponent<Animator>().SetTrigger("Hit");
         }

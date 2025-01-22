@@ -6,6 +6,7 @@ using UnityEngine.AI;
 public enum EnemyStates { GUARD, PATROL, CHASE, DEAD }
 
 [RequireComponent(typeof(NavMeshAgent))]
+[RequireComponent(typeof(CharacterStats))]
 public class EnemyController : MonoBehaviour,IEndGameObserver
 {
     private EnemyStates enemyStates;
@@ -14,11 +15,11 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
     private Animator anim;
     private Collider collider;
 
-    private CharacterStats characterStats;
+    protected CharacterStats characterStats;
 
     [Header("Basic Setting")]
     public float sightRadius; // 发现范围
-    private GameObject attackTarget; // 目标
+    protected GameObject attackTarget; // 目标
     public bool isGuard;
     private float speed;
 
@@ -67,15 +68,18 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
             enemyStates = EnemyStates.PATROL;
             GetNewWayPoint();
         }
-    }
 
-    void OnEnable()
-    {
         GameManager.Instance.AddObserver(this);
     }
 
+    //void OnEnable()
+    //{
+    //    GameManager.Instance.AddObserver(this);
+    //}
+
     void OnDisable()
     {
+        if (!GameManager.IsInitialized) return;
         GameManager.Instance.RemoveObserver(this);
     }
 
@@ -156,8 +160,8 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
                 break;
             case EnemyStates.DEAD:
                 collider.enabled = false;
-                agent.enabled = false;
-
+                //agent.enabled = false;
+                agent.radius = 0;
                 Destroy(gameObject, 2f);
                 break;
         }
@@ -166,6 +170,7 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
 
     bool FoundPlayer()
     {
+        // 检测范围内碰撞体
         var colliders = Physics.OverlapSphere(transform.position, sightRadius);
 
         foreach (var target in colliders)
@@ -222,13 +227,13 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
             if (lastAttackTime < 0)
             {
                 lastAttackTime = characterStats.attackData.coolDown;
-            }
 
-            // 暴击判断
-            characterStats.isCritical = Random.value < characterStats.attackData.criticalChance;
+                // 暴击判断
+                characterStats.isCritical = Random.value < characterStats.attackData.criticalChance;
 
-            // 执行攻击
-            Attack();
+                // 执行攻击
+                Attack();
+            }            
         }
 
     }
@@ -289,7 +294,7 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
 
     public void Hit()
     {
-        if (attackTarget != null)
+        if (attackTarget != null && transform.isFacingTarget(attackTarget.transform))
         {
             var targetStats = attackTarget.GetComponent<CharacterStats>();
             targetStats.TakeDamage(characterStats, targetStats);
